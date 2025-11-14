@@ -1,37 +1,33 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { type Song } from "@shared/schema";
+import fs from "fs/promises";
+import path from "path";
 
-// modify the interface with any CRUD methods
-// you might need
+const SONGS_FILE = path.join(process.cwd(), "server", "data", "songs.json");
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  getSongs(): Promise<Song[]>;
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<string, User>;
+  private songs: Song[] = [];
 
   constructor() {
-    this.users = new Map();
+    this.loadSongs();
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  private async loadSongs() {
+    try {
+      const data = await fs.readFile(SONGS_FILE, "utf-8");
+      this.songs = JSON.parse(data);
+    } catch (error) {
+      console.error("Failed to load songs.json:", error);
+      this.songs = [];
+    }
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async getSongs(): Promise<Song[]> {
+    await this.loadSongs();
+    return this.songs;
   }
 }
 

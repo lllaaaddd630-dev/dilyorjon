@@ -1,0 +1,138 @@
+import { Play, Pause, SkipBack, SkipForward, Music } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import type { Song } from "@shared/schema";
+
+interface MusicPlayerProps {
+  currentSong: Song | null;
+  isPlaying: boolean;
+  progress: number;
+  currentTime: number;
+  onPlayPause: () => void;
+  onNext: () => void;
+  onPrevious: () => void;
+  onProgressClick: (e: React.MouseEvent<HTMLDivElement>) => void;
+}
+
+export function MusicPlayer({
+  currentSong,
+  isPlaying,
+  progress,
+  currentTime,
+  onPlayPause,
+  onNext,
+  onPrevious,
+  onProgressClick,
+}: MusicPlayerProps) {
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const gradients = [
+    "from-purple-500 to-pink-500",
+    "from-blue-500 to-cyan-500",
+    "from-green-500 to-teal-500",
+    "from-orange-500 to-red-500",
+    "from-indigo-500 to-purple-500",
+    "from-yellow-500 to-orange-500",
+    "from-pink-500 to-rose-500",
+    "from-teal-500 to-green-500",
+  ];
+
+  const gradient = currentSong
+    ? currentSong.coverGradient || gradients[currentSong.id % gradients.length]
+    : gradients[0];
+
+  return (
+    <Card className="sticky bottom-4 md:bottom-8 p-6 md:p-8 backdrop-blur-xl bg-card/95 border-2">
+      {/* Current Song Info */}
+      <div className="flex items-center gap-4 mb-6">
+        <div
+          className={`w-20 h-20 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0`}
+          data-testid="img-player-cover"
+        >
+          <Music className="w-8 h-8 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2
+            className="text-xl md:text-2xl font-bold text-foreground truncate"
+            data-testid="text-player-title"
+          >
+            {currentSong ? currentSong.title : "Select a song"}
+          </h2>
+          <p
+            className="text-sm md:text-base text-muted-foreground truncate"
+            data-testid="text-player-artist"
+          >
+            {currentSong ? currentSong.artist : "No song playing"}
+          </p>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="flex items-center justify-center gap-4 md:gap-8 mb-6">
+        <Button
+          size="lg"
+          variant="ghost"
+          className="rounded-full"
+          onClick={onPrevious}
+          disabled={!currentSong}
+          data-testid="button-previous"
+        >
+          <SkipBack className="w-6 h-6" />
+        </Button>
+
+        <Button
+          size="lg"
+          variant="default"
+          className="rounded-full min-h-16 min-w-16"
+          onClick={onPlayPause}
+          disabled={!currentSong}
+          data-testid="button-main-play-pause"
+        >
+          {isPlaying ? (
+            <Pause className="w-7 h-7" data-testid="icon-pause" />
+          ) : (
+            <Play className="w-7 h-7 ml-1" data-testid="icon-play" />
+          )}
+        </Button>
+
+        <Button
+          size="lg"
+          variant="ghost"
+          className="rounded-full"
+          onClick={onNext}
+          disabled={!currentSong}
+          data-testid="button-next"
+        >
+          <SkipForward className="w-6 h-6" />
+        </Button>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="space-y-2">
+        <div
+          className="h-1.5 bg-muted rounded-full overflow-hidden cursor-pointer hover-elevate"
+          onClick={onProgressClick}
+          data-testid="progress-bar-main"
+        >
+          <div
+            className="h-full bg-primary transition-all duration-100"
+            style={{ width: `${progress}%` }}
+            data-testid="progress-bar-main-fill"
+          />
+        </div>
+        <div className="flex justify-between text-sm text-muted-foreground">
+          <span data-testid="text-player-current-time">
+            {formatTime(currentTime)}
+          </span>
+          <span data-testid="text-player-duration">
+            {currentSong ? formatTime(currentSong.duration) : "0:00"}
+          </span>
+        </div>
+      </div>
+    </Card>
+  );
+}
